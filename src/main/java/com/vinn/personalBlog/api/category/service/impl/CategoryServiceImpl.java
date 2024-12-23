@@ -4,9 +4,12 @@ import com.vinn.personalBlog.api.category.dto.CategoryDto;
 import com.vinn.personalBlog.api.category.model.Category;
 import com.vinn.personalBlog.api.category.repository.CategoryRepository;
 import com.vinn.personalBlog.api.category.service.CategoryService;
-import java.util.Base64;
+
+import java.util.*;
 
 import com.vinn.personalBlog.api.exception.EntityNotFoundException;
+import com.vinn.personalBlog.api.post.dto.CategoryPostDto;
+import com.vinn.personalBlog.api.post.dto.PostDto;
 import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,7 +18,6 @@ import org.apache.commons.codec.digest.DigestUtils;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.nio.charset.StandardCharsets;
-import java.util.List;
 import java.util.stream.Collectors;
 
 /**
@@ -111,6 +113,107 @@ public class CategoryServiceImpl implements CategoryService {
         categoryRepository.findByCode(code)
                 .orElseThrow(() -> new EntityNotFoundException("Category with code " + code + " not found"));
         categoryRepository.deleteByCode(code);
+    }
+
+    /**
+     * Retrieves a limited list of categories along with their associated posts.
+     * This method fetches categories and their posts, ordered by category name
+     * and the creation date of the posts, limited to the first 3 results.
+     *
+     * @return A list of {@link CategoryPostDto} objects, each containing details about a category
+     *         and its associated posts.
+     */
+    @Override
+    public List<CategoryPostDto> getAllCategoriesWithPosts() {
+
+        List<Object[]> rawData = categoryRepository.fetchCategoriesWithPostsRaw();
+
+        return groupPostsByCategory(rawData);
+    }
+
+    /**
+     * Groups raw database rows into a list of CategoryPostDto objects.
+     */
+    private List<CategoryPostDto> groupPostsByCategory(List<Object[]> rawData) {
+        Map<Long, CategoryPostDto> categoryMap = new LinkedHashMap<>();
+
+        for (Object[] row : rawData) {
+            processRowIntoCategoryMap(row, categoryMap);
+        }
+
+        return new ArrayList<>(categoryMap.values());
+    }
+
+    /**
+     * Processes a single row of raw data and updates the category map.
+     */
+    private void processRowIntoCategoryMap(Object[] row, Map<Long, CategoryPostDto> categoryMap) {
+        Long categoryId = (Long) row[0];
+        String categoryName = (String) row[1];
+        String categoryDescription = (String) row[2];
+        String iconName = (String) row[3];
+        Long postId = row[4] != null ? ((Number) row[4]).longValue() : null;
+        String postTitle = (String) row[5];
+        String postDescription = (String) row[6];
+        String categoryCode = (String) row[7];
+
+        CategoryPostDto categoryPostDto = categoryMap.computeIfAbsent(categoryId, id ->
+                createCategoryPostDto(categoryId, categoryName, categoryDescription, iconName));
+
+        if (postId != null) {
+            categoryPostDto.getPosts().add(createPostDto(postId, postTitle, postDescription, categoryCode));
+        }
+    }
+
+    /**
+     * Creates a CategoryPostDto for a given category.
+     */
+    private CategoryPostDto createCategoryPostDto(Long categoryId, String name, String description, String iconName) {
+        return new CategoryPostDto(categoryId, name, description, iconName, new ArrayList<>());
+    }
+
+    /**
+     * Creates a PostDto for a given post.
+     */
+    private PostDto createPostDto(Long postId, String title, String description, String categoryCode) {
+        return new PostDto(postId, title, description, categoryCode);
+    }
+
+    /**
+     * Retrieves posts associated with a specific category, identified by its name.
+     * This method fetches posts belonging to the given category, ordered by their creation date
+     * in descending order.
+     *
+     * @param categoryName The name of the category whose posts are to be retrieved.
+     *                     Must be a valid, non-null, and non-empty string.
+     * @return An object of {@link CategoryPostDto}, containing details about the category
+     * and its associated posts.
+     * @throws IllegalArgumentException if the provided category name is invalid.
+     * @throws EntityNotFoundException  if no category with the given name is found.
+     */
+    @Override
+    public CategoryPostDto getPostsByCategoryName(String categoryName) {
+        if (categoryName == null || categoryName.trim().isEmpty()) {
+            logger.error("Invalid category name provided: '{}'. Category name must be non-null and non-empty.", categoryName);
+            throw new IllegalArgumentException("Category name must be a valid, non-null, and non-empty string.");
+        }
+
+        List<PostDto> posts = categoryRepository.fetchPostsByCategoryName(categoryName);
+
+        if (posts == null || posts.isEmpty()) {
+            logger.warn("No posts found for category: '{}'.", categoryName);
+            throw new EntityNotFoundException("No posts found for category: " + categoryName);
+        }
+
+        Category category = categoryRepository.findByName(categoryName);
+
+        return new CategoryPostDto(
+                category.getId(),
+                category.getName(),
+                category.getDescription(),
+                category.getIconName(),
+                posts
+        );
     }
 
     /**
