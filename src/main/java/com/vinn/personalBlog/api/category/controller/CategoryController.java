@@ -2,6 +2,7 @@ package com.vinn.personalBlog.api.category.controller;
 
 import com.vinn.personalBlog.api.category.dto.CategoryDto;
 import com.vinn.personalBlog.api.category.service.CategoryService;
+import com.vinn.personalBlog.api.post.dto.CategoryPostDto;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -71,5 +72,28 @@ public class CategoryController {
         logger.info("Received request to delete category with code: {}", code);
         categoryService.deleteCategory(code);
         return ResponseEntity.ok().build();
+    }
+
+    /**
+     * Retrieves all categories with their associated posts.
+     * @return a ResponseEntity containing a list of CategoryPostDTO.
+     */
+    @GetMapping("/with-posts")
+    public ResponseEntity<List<CategoryPostDto>> getAllCategoriesWithPosts() {
+        logger.info("Received request to fetch all categories with their posts");
+        List<CategoryPostDto> categoryPosts = categoryService.getAllCategoriesWithPosts();
+        return ResponseEntity.ok(categoryPosts);
+    }
+
+    /**
+     * Retrieves posts for a specific category.
+     * @param categoryName the name of the category.
+     * @return a ResponseEntity containing a list of CategoryPostDTO.
+     */
+    @GetMapping("/{categoryName}/with-posts")
+    public ResponseEntity<CategoryPostDto> getCategoryWithPosts(@PathVariable String categoryName) {
+        logger.info("Received request to fetch posts for category: {}", categoryName);
+        CategoryPostDto categoryPosts = categoryService.getPostsByCategoryName(categoryName);
+        return ResponseEntity.ok(categoryPosts);
     }
 }

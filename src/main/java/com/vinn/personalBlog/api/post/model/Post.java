@@ -1,40 +1,39 @@
-package com.vinn.personalBlog.api.category.model;
+package com.vinn.personalBlog.api.post.model;
 
-import com.vinn.personalBlog.api.post.model.Post;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedDate;
+import com.vinn.personalBlog.api.category.model.Category;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.Instant;
-import java.util.List;
 
 /**
- * Represents a category of content in the blog.
+ * Represents a blog.
  */
 @Entity
-@Table(name = "categories")
+@Table(name = "posts")
 @EntityListeners(AuditingEntityListener.class)
 @Getter
 @Setter
-public class Category {
+public class Post {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(nullable = false, length = 255)
-    private String name;
-
-    @Column(nullable = false, length = 255)
-    private String code;
+    private String title;
 
     @Column(columnDefinition = "TEXT")
     private String description;
 
-    @Column(name = "icon_name", length = 255)
-    private String iconName;
+    @Column(columnDefinition = "TEXT")
+    private String content;
+
+    @Column(length = 255)
+    private String author;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     @CreatedDate
@@ -44,6 +43,7 @@ public class Category {
     @LastModifiedDate
     private Instant updatedAt;
 
-    @OneToMany(mappedBy = "category", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<Post> posts;
+    @ManyToOne
+    @JoinColumn(name = "category_id", nullable = false)
+    private Category category;
 }
