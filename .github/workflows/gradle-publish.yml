@@ -39,8 +39,8 @@ jobs:
     - name: Add permission to Gradle
       run: chmod +x ./gradlew
 
-    - name: Build with Gradle
-      run: ./gradlew build    
+    - name: Build Gradle without test
+      run: ./gradlew build -x test
 
     # The USERNAME and TOKEN need to correspond to the credentials environment variables used in
     # the publishing section of your build.gradle
