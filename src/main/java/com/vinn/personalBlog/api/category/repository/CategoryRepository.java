@@ -21,13 +21,17 @@ public interface CategoryRepository extends JpaRepository<Category, Long> {
     void deleteByCode(String code);
 
     @Query(value = """
-        SELECT c.id AS categoryId, c.name AS categoryName, c.description AS categoryDescription, 
-               c.icon_name AS iconName, p.id AS postId, p.title AS postTitle, 
-               p.description AS postDescription, c.code AS categoryCode
-        FROM categories c
-        LEFT JOIN posts p ON c.id = p.category_id
-        ORDER BY c.name, p.created_at DESC
-        LIMIT 3
+    SELECT categoryId, categoryName, categoryDescription, iconName, postId, postTitle, postDescription, categoryCode
+        FROM (
+            SELECT c.id AS categoryId, c.name AS categoryName, c.description AS categoryDescription, 
+                   c.icon_name AS iconName, p.id AS postId, p.title AS postTitle, 
+                   p.description AS postDescription, c.code AS categoryCode,
+                   ROW_NUMBER() OVER (PARTITION BY c.id ORDER BY p.created_at DESC) AS rn
+            FROM categories c
+            LEFT JOIN posts p ON c.id = p.category_id
+        ) subquery
+        WHERE rn <= 3
+    --    ORDER BY categoryName, rn
     """, nativeQuery = true)
     List<Object[]> fetchCategoriesWithPostsRaw();
 
