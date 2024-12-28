@@ -23,29 +23,3 @@ jobs:
         run: |
           docker build . --file Dockerfile --tag thanthtoo/personal_blog_spring:latest
           docker push thanthtoo/personal_blog_spring:latest
-
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - name: Install Railway CLI
-        run: |
-          curl -fsSL https://railway.app/install.sh | sh
-          echo 'export PATH="$HOME/.railway/bin:$PATH"' >> $GITHUB_ENV
-          source $GITHUB_ENV
-
-      - name: Authenticate with Railway
-        env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-        run: |
-          echo $RAILWAY_TOKEN | railway login
-
-      - name: Link Railway Project
-        run: |
-          railway link --project ${{ secrets.RAILWAY_PROJECT_NAME }}
-
-      - name: Deploy to Railway
-        env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-        run: |
-          railway up
