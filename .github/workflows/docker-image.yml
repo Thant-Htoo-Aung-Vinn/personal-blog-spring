@@ -34,11 +34,15 @@ jobs:
           echo 'export PATH="$HOME/.railway/bin:$PATH"' >> $GITHUB_ENV
           source $GITHUB_ENV
 
-      - name: Link Railway Project
+      - name: Authenticate with Railway
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
         run: |
-          railway link --project astonishing-appreciation
+          echo $RAILWAY_TOKEN | railway login --token
+
+      - name: Link Railway Project
+        run: |
+          railway link --project ${{ secrets.RAILWAY_PROJECT_NAME }}
 
       - name: Deploy to Railway
         env:
