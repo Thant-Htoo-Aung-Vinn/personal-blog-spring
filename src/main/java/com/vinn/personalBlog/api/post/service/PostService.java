@@ -9,4 +9,5 @@ public interface PostService {
     PostDto getPostById(Long id);
     PostDto saveOrUpdatePost(PostDto postDto);
     void deletePost(Long id);
+    List<PostDto> getRecentPosts(int limit);
 }

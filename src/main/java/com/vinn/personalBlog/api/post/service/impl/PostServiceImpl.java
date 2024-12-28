@@ -10,6 +10,7 @@ import com.vinn.personalBlog.api.post.service.PostService;
 import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -79,5 +80,13 @@ public class PostServiceImpl implements PostService {
         postRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Post with id " + id + " not found"));
         postRepository.deleteById(id);
+    }
+
+    @Override
+    public List<PostDto> getRecentPosts(int limit) {
+        logger.info("Fetching the {} most recent posts", limit);
+        return postRepository.findRecentPosts(PageRequest.of(0, limit)).stream()
+                .map(post -> modelMapper.map(post, PostDto.class))
+                .collect(Collectors.toList());
     }
 }

@@ -39,7 +39,7 @@ public class PostController {
      * @param id the ID of the post.
      * @return a ResponseEntity containing the PostDto.
      */
-    @GetMapping("/{id}")
+    @GetMapping("/{id:\\d+}")
     public ResponseEntity<PostDto> getPostById(@PathVariable Long id) {
         logger.info("Received request to fetch post with id: {}", id);
         PostDto postDto = postService.getPostById(id);
@@ -68,5 +68,18 @@ public class PostController {
         logger.info("Received request to delete post with id: {}", id);
         postService.deletePost(id);
         return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * Retrieves the most recent posts.
+     *
+     * @param limit the number of posts to retrieve.
+     * @return a ResponseEntity containing the list of recent PostDto objects.
+     */
+    @GetMapping("/recent")
+    public ResponseEntity<List<PostDto>> getRecentPosts(@RequestParam(defaultValue = "3") int limit) {
+        logger.info("Received request to fetch {} most recent posts", limit);
+        List<PostDto> recentPosts = postService.getRecentPosts(limit);
+        return ResponseEntity.ok(recentPosts);
     }
 }
