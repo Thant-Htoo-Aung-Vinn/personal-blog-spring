@@ -28,8 +28,14 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
+      - name: Install Railway CLI
+        run: |
+          curl -fsSL https://railway.app/install.sh | sh
+          echo 'export PATH="$HOME/.railway/bin:$PATH"' >> $GITHUB_ENV
+          source $GITHUB_ENV
+
       - name: Deploy to Railway
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
         run: |
-          railway up --project personal_blog_spring
+          railway up --project astonishing-appreciation
